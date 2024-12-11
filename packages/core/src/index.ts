@@ -10,3 +10,12 @@ export {
   type Priority,
   type Role,
 } from "./enums";
+export {
+  DomainError,
+  InsufficientStock,
+  InvalidTransition,
+  NotFound,
+  ScheduleConflict,
+  ValidationFailed,
+  type DomainErrorCode,
+} from "./errors";
