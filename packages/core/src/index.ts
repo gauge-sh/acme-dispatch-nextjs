@@ -20,3 +20,11 @@ export {
   type DomainErrorCode,
 } from "./errors";
 export { divideRounded, toSafeCents } from "./money";
+export {
+  allowedTransitions,
+  canTransition,
+  checkAcceptsAppointments,
+  checkAcceptsParts,
+  checkTransition,
+  isTerminal,
+} from "./jobs";
