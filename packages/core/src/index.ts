@@ -28,3 +28,14 @@ export {
   checkTransition,
   isTerminal,
 } from "./jobs";
+export {
+  MS_PER_HOUR,
+  checkAvailability,
+  checkWindow,
+  durationMs,
+  findConflict,
+  hoursBetween,
+  isWeekendUtc,
+  overlaps,
+  type Booking,
+} from "./scheduling";
