@@ -39,3 +39,9 @@ export {
   overlaps,
   type Booking,
 } from "./scheduling";
+export {
+  adjustStock,
+  checkQuantity,
+  consumeStock,
+  releaseStock,
+} from "./stock";
