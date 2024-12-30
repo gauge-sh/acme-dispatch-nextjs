@@ -57,3 +57,4 @@ export {
   type PartInput,
   type PricedInvoice,
 } from "./pricing";
+export { checkInvoiceable, draftInvoice } from "./invoicing";
