@@ -18,6 +18,19 @@ model User {
   @@map("users")
 }
 
+model Technician {
+  id              Int      @id @default(autoincrement())
+  name            String
+  phone           String?
+  // JSON array of strings; SQLite has no native list type.
+  skillTags       String   @default("[]") @map("skill_tags")
+  hourlyCostCents Int      @map("hourly_cost_cents")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("technicians")
+}
+
 model Customer {
   id             Int      @id @default(autoincrement())
   name           String
