@@ -40,6 +40,22 @@ model Customer {
   notes          String?
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
+  jobs           Job[]
 
   @@map("customers")
+}
+
+model Job {
+  id          Int      @id @default(autoincrement())
+  customerId  Int      @map("customer_id")
+  title       String
+  description String?
+  priority    String   @default("normal")
+  status      String   @default("requested")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  customer    Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("jobs")
 }
