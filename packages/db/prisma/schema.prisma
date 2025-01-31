@@ -27,6 +27,7 @@ model Technician {
   hourlyCostCents Int      @map("hourly_cost_cents")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
+  appointments    Appointment[]
 
   @@map("technicians")
 }
@@ -55,7 +56,25 @@ model Job {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   customer    Customer @relation(fields: [customerId], references: [id])
+  appointments Appointment[]
 
   @@index([customerId])
   @@map("jobs")
+}
+
+model Appointment {
+  id              Int        @id @default(autoincrement())
+  jobId           Int        @map("job_id")
+  technicianId    Int        @map("technician_id")
+  scheduledStart  DateTime   @map("scheduled_start")
+  scheduledEnd    DateTime   @map("scheduled_end")
+  completionNotes String?    @map("completion_notes")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  job             Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  technician      Technician @relation(fields: [technicianId], references: [id])
+
+  @@index([jobId])
+  @@index([technicianId])
+  @@map("appointments")
 }
