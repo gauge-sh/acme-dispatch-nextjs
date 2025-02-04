@@ -62,6 +62,30 @@ model Job {
   @@map("jobs")
 }
 
+model Part {
+  id             Int         @id @default(autoincrement())
+  sku            String      @unique
+  name           String
+  unitCostCents  Int         @map("unit_cost_cents")
+  unitPriceCents Int         @map("unit_price_cents")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  stockLevel     StockLevel?
+
+  @@map("parts")
+}
+
+model StockLevel {
+  id             Int      @id @default(autoincrement())
+  partId         Int      @unique @map("part_id")
+  quantityOnHand Int      @default(0) @map("quantity_on_hand")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  part           Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@map("stock_levels")
+}
+
 model Appointment {
   id              Int        @id @default(autoincrement())
   jobId           Int        @map("job_id")
