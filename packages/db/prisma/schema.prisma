@@ -57,6 +57,7 @@ model Job {
   updatedAt   DateTime @updatedAt @map("updated_at")
   customer    Customer @relation(fields: [customerId], references: [id])
   appointments Appointment[]
+  jobParts    JobPart[]
 
   @@index([customerId])
   @@map("jobs")
@@ -71,6 +72,7 @@ model Part {
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
   stockLevel     StockLevel?
+  jobParts       JobPart[]
 
   @@map("parts")
 }
@@ -84,6 +86,20 @@ model StockLevel {
   part           Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
 
   @@map("stock_levels")
+}
+
+model JobPart {
+  id        Int      @id @default(autoincrement())
+  jobId     Int      @map("job_id")
+  partId    Int      @map("part_id")
+  quantity  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  part      Part     @relation(fields: [partId], references: [id])
+
+  @@index([jobId])
+  @@map("job_parts")
 }
 
 model Appointment {
