@@ -58,6 +58,7 @@ model Job {
   customer    Customer @relation(fields: [customerId], references: [id])
   appointments Appointment[]
   jobParts    JobPart[]
+  invoiceRecord InvoiceRecord?
 
   @@index([customerId])
   @@map("jobs")
@@ -86,6 +87,36 @@ model StockLevel {
   part           Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
 
   @@map("stock_levels")
+}
+
+model InvoiceRecord {
+  id         Int               @id @default(autoincrement())
+  jobId      Int               @unique @map("job_id")
+  laborCents Int               @map("labor_cents")
+  partsCents Int               @map("parts_cents")
+  totalCents Int               @map("total_cents")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+  job        Job               @relation(fields: [jobId], references: [id])
+  lineItems  InvoiceLineItem[]
+
+  @@map("invoice_records")
+}
+
+model InvoiceLineItem {
+  id              Int           @id @default(autoincrement())
+  invoiceRecordId Int           @map("invoice_record_id")
+  position        Int
+  kind            String
+  description     String
+  quantity        Float
+  unitCents       Int           @map("unit_cents")
+  amountCents     Int           @map("amount_cents")
+  weekend         Boolean       @default(false)
+  invoiceRecord   InvoiceRecord @relation(fields: [invoiceRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceRecordId, position])
+  @@map("invoice_line_items")
 }
 
 model JobPart {
