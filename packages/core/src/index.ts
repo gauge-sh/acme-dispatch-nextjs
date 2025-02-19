@@ -58,3 +58,4 @@ export {
   type PricedInvoice,
 } from "./pricing";
 export { checkInvoiceable, draftInvoice } from "./invoicing";
+export { FieldErrors, type Attrs } from "./validate";
