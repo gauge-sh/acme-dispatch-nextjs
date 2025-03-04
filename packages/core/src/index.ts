@@ -59,3 +59,13 @@ export {
 } from "./pricing";
 export { checkInvoiceable, draftInvoice } from "./invoicing";
 export { FieldErrors, type Attrs } from "./validate";
+export {
+  parseCustomerCreate,
+  parseCustomerUpdate,
+  type CustomerAttrs,
+} from "./validators/customer";
+export {
+  parseTechnicianCreate,
+  parseTechnicianUpdate,
+  type TechnicianAttrs,
+} from "./validators/technician";
