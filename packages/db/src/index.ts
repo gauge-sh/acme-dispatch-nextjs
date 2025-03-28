@@ -23,3 +23,4 @@ export {
 } from "./pagination";
 
 export * from "./services/customers";
+export * from "./services/technicians";
