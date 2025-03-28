@@ -137,10 +137,13 @@ model InvoiceLineItem {
 }
 
 model JobPart {
-  id        Int      @id @default(autoincrement())
-  jobId     Int      @map("job_id")
-  partId    Int      @map("part_id")
-  quantity  Int
+  id             Int      @id @default(autoincrement())
+  jobId          Int      @map("job_id")
+  partId         Int      @map("part_id")
+  quantity       Int
+  // Captured from the part at the time of use so later price changes never
+  // restate an existing invoice.
+  unitPriceCents Int      @default(0) @map("unit_price_cents")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
