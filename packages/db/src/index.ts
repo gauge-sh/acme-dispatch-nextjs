@@ -25,3 +25,4 @@ export {
 export * from "./services/customers";
 export * from "./services/technicians";
 export * from "./services/users";
+export * from "./services/tokens";
