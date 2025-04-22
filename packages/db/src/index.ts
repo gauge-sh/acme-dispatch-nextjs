@@ -28,3 +28,4 @@ export * from "./services/users";
 export * from "./services/tokens";
 export * from "./services/jobs";
 export * from "./services/appointments";
+export * from "./services/parts";
