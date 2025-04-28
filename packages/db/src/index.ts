@@ -29,3 +29,5 @@ export * from "./services/tokens";
 export * from "./services/jobs";
 export * from "./services/appointments";
 export * from "./services/parts";
+export * from "./services/jobParts";
+export * from "./services/invoices";
