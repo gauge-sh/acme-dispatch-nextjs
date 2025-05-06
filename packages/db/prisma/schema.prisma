@@ -166,6 +166,6 @@ model Appointment {
   technician      Technician @relation(fields: [technicianId], references: [id])
 
   @@index([jobId])
-  @@index([technicianId])
+  @@index([technicianId, scheduledStart])
   @@map("appointments")
 }
