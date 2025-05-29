@@ -8,7 +8,9 @@ import { beforeEach } from "vitest";
 // which opens its connection based on DATABASE_URL at import time.
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dbDir = path.join(here, ".dbs");
-const workerDb = path.join(dbDir, `worker-${process.env.VITEST_POOL_ID ?? "0"}.db`);
+// Worker processes are reused across files but never share a pid while
+// running concurrently, so a per-pid database keeps files isolated.
+const workerDb = path.join(dbDir, `worker-${process.pid}.db`);
 if (!existsSync(workerDb)) {
   copyFileSync(path.join(dbDir, "template.db"), workerDb);
 }
