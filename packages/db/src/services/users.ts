@@ -45,10 +45,21 @@ async function checkEmailFree(email: string, exceptId?: number): Promise<void> {
   }
 }
 
-export async function createUser(input: Attrs): Promise<User> {
+/** `passwordHash` comes from the web app only; the API never sets one. */
+export async function createUser(
+  input: Attrs,
+  options: { passwordHash?: string } = {},
+): Promise<User> {
   const attrs = parseUserCreate(input);
   await checkEmailFree(attrs.email);
-  return prisma.user.create({ data: attrs });
+  return prisma.user.create({
+    data: { ...attrs, passwordHash: options.passwordHash ?? null },
+  });
+}
+
+export async function setUserPassword(id: number, passwordHash: string): Promise<void> {
+  await getUser(id);
+  await prisma.user.update({ where: { id }, data: { passwordHash } });
 }
 
 async function isLastActiveAdmin(user: User): Promise<boolean> {

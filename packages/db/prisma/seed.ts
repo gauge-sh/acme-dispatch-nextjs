@@ -132,11 +132,15 @@ async function main(): Promise<void> {
   await prisma.customer.deleteMany();
   await prisma.user.deleteMany();
 
+  // "dispatch123", hashed once so reseeding is byte-for-byte identical.
+  const devPasswordHash =
+    "$2b$10$tqQy972lJQ0Kx3502CFq8eEw0Rhc8qqU/7H6HpgPXSZdjW8KAY.hG";
   await prisma.user.create({
     data: {
       email: "olivia@acme-dispatch.example",
       name: "Olivia Chen",
       role: "admin",
+      passwordHash: devPasswordHash,
     },
   });
   await prisma.user.create({
@@ -144,6 +148,7 @@ async function main(): Promise<void> {
       email: "ray@acme-dispatch.example",
       name: "Ray Donnelly",
       role: "dispatcher",
+      passwordHash: devPasswordHash,
     },
   });
 

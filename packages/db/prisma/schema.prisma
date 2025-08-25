@@ -13,6 +13,9 @@ model User {
   name      String
   role      String   @default("dispatcher")
   isActive  Boolean  @default(true) @map("is_active")
+  // Null until an admin sets a password; such a user cannot sign in to the
+  // web app but may still own api tokens.
+  passwordHash String? @map("password_hash")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   apiTokens ApiToken[]
