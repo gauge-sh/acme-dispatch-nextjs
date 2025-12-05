@@ -420,3 +420,15 @@ dl.props dd {
 .schedule-grid td {
   font-size: 0.82rem;
 }
+
+.token-reveal {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #10161f;
+  color: #9fe8b8;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  word-break: break-all;
+}
+.schedule-grid td {
+  font-size: 0.82rem;
+}
