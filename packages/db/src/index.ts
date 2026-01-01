@@ -9,6 +9,7 @@ export type {
   Job,
   JobPart,
   Part,
+  StockAdjustment,
   StockLevel,
   Technician,
   User,

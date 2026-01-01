@@ -101,15 +101,36 @@ export async function listStockLevels(
 export async function adjustStockLevel(
   partId: number,
   delta: number,
+  options: { userId?: number; note?: string } = {},
 ): Promise<StockLevelWithPart> {
   return prisma.$transaction(async (tx) => {
     const stock = await tx.stockLevel.findUnique({ where: { partId } });
     if (!stock) throw new NotFound("part not found");
     const quantityOnHand = adjustStock(stock.quantityOnHand, delta);
+    // Manual adjustments leave a trail; job usage is already visible on the
+    // job's part records.
+    await tx.stockAdjustment.create({
+      data: {
+        partId,
+        delta,
+        quantityAfter: quantityOnHand,
+        userId: options.userId ?? null,
+        note: options.note ?? null,
+      },
+    });
     return tx.stockLevel.update({
       where: { partId },
       data: { quantityOnHand },
       include: { part: true },
     });
+  });
+}
+
+export async function listStockAdjustments(partId: number, limit = 20) {
+  return prisma.stockAdjustment.findMany({
+    where: { partId },
+    include: { user: true },
+    orderBy: { id: "desc" },
+    take: limit,
   });
 }

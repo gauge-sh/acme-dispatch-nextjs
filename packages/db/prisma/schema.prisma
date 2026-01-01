@@ -19,6 +19,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   apiTokens ApiToken[]
+  stockAdjustments StockAdjustment[]
 
   @@map("users")
 }
@@ -94,6 +95,7 @@ model Part {
   updatedAt      DateTime    @updatedAt @map("updated_at")
   stockLevel     StockLevel?
   jobParts       JobPart[]
+  stockAdjustments StockAdjustment[]
 
   @@map("parts")
 }
@@ -154,6 +156,21 @@ model JobPart {
 
   @@index([jobId])
   @@map("job_parts")
+}
+
+model StockAdjustment {
+  id            Int      @id @default(autoincrement())
+  partId        Int      @map("part_id")
+  delta         Int
+  quantityAfter Int      @map("quantity_after")
+  note          String?
+  userId        Int?     @map("user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  part          Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([partId])
+  @@map("stock_adjustments")
 }
 
 model Appointment {

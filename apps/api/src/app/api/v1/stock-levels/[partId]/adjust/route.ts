@@ -18,9 +18,9 @@ function parseDelta(input: Attrs): number {
   return raw as number;
 }
 
-export const POST = route(async (request, context) => {
+export const POST = route(async (request, context, user) => {
   const partId = await idParam(context, "part", "partId");
   const delta = parseDelta(await readBody(request));
-  const stock = await adjustStockLevel(partId, delta);
+  const stock = await adjustStockLevel(partId, delta, { userId: user.id });
   return ok(serializeStockLevel(stock));
 });
