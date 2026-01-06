@@ -11,6 +11,7 @@ import {
   dollarsToCents,
   intOrUndefined,
   text,
+  textOrNull,
 } from "@/lib/forms";
 import { requireAdmin, requireUser } from "@/lib/session";
 
@@ -74,13 +75,16 @@ export async function adjustStockAction(
   _prev: ActionState | null,
   data: FormData,
 ): Promise<ActionState | null> {
-  await requireUser();
+  const user = await requireUser();
   const delta = intOrUndefined(data, "delta");
   if (delta === undefined) {
     return { error: "delta must be an integer", fields: { delta: "delta must be an integer" } };
   }
   try {
-    await adjustStockLevel(partId, delta);
+    await adjustStockLevel(partId, delta, {
+      userId: user.id,
+      note: textOrNull(data, "note") ?? undefined,
+    });
   } catch (error) {
     return actionError(error);
   }

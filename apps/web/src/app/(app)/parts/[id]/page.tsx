@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { prisma } from "@acme/db";
+import { listStockAdjustments, prisma } from "@acme/db";
 
 import { DeleteForm } from "@/components/DeleteForm";
 import { StockAdjustForm } from "@/components/forms/StockAdjustForm";
-import { formatCents, formatDate } from "@/lib/format";
+import { formatCents, formatDate, formatDateTime } from "@/lib/format";
 import { currentUser } from "@/lib/session";
 
 import { adjustStockAction, deletePartAction } from "../actions";
@@ -24,7 +24,10 @@ export default async function PartPage(props: { params: Promise<{ id: string }> 
     },
   });
   if (!part) notFound();
-  const viewer = await currentUser();
+  const [viewer, adjustments] = await Promise.all([
+    currentUser(),
+    listStockAdjustments(part.id),
+  ]);
 
   return (
     <>
@@ -60,6 +63,36 @@ export default async function PartPage(props: { params: Promise<{ id: string }> 
 
       <h2>Adjust stock</h2>
       <StockAdjustForm action={adjustStockAction.bind(null, part.id)} />
+
+      <h2>Adjustment history</h2>
+      {adjustments.length === 0 ? (
+        <p className="empty">No manual adjustments recorded.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>When</th>
+              <th className="num">Change</th>
+              <th className="num">On hand after</th>
+              <th>By</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {adjustments.map((adjustment) => (
+              <tr key={adjustment.id}>
+                <td>{formatDateTime(adjustment.createdAt)}</td>
+                <td className="num">
+                  {adjustment.delta > 0 ? `+${adjustment.delta}` : adjustment.delta}
+                </td>
+                <td className="num">{adjustment.quantityAfter}</td>
+                <td>{adjustment.user?.name ?? <span className="muted">api</span>}</td>
+                <td>{adjustment.note ?? <span className="muted">—</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <h2>Recent usage</h2>
       {part.jobParts.length === 0 ? (

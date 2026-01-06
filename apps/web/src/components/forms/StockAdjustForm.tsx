@@ -17,6 +17,10 @@ export function StockAdjustForm({ action }: StockAdjustFormProps) {
         Adjust by (use a negative number to remove stock)
         <input name="delta" type="number" required placeholder="+10 or -3" />
       </label>
+      <label>
+        Note
+        <input name="note" maxLength={200} placeholder="received shipment" />
+      </label>
       <button type="submit" disabled={pending}>
         Apply
       </button>
