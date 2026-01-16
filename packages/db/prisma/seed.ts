@@ -122,6 +122,7 @@ const DURATIONS_MS = [3600000, 5400000, 7200000, 9000000, 10800000, 2700000] as 
 async function main(): Promise<void> {
   await prisma.invoiceLineItem.deleteMany();
   await prisma.invoiceRecord.deleteMany();
+  await prisma.stockAdjustment.deleteMany();
   await prisma.jobPart.deleteMany();
   await prisma.appointment.deleteMany();
   await prisma.job.deleteMany();
@@ -279,6 +280,29 @@ async function main(): Promise<void> {
     if (status === "invoiced") {
       await createInvoiceForJob(job.id);
     }
+  }
+
+  // A few receiving events so the adjustment history is not empty.
+  const admin = await prisma.user.findUniqueOrThrow({
+    where: { email: "olivia@acme-dispatch.example" },
+  });
+  for (let i = 0; i < 6; i++) {
+    const part = parts[randInt(0, parts.length - 1)]!;
+    const delta = randInt(4, 12);
+    const stock = await prisma.stockLevel.findUniqueOrThrow({ where: { partId: part.id } });
+    await prisma.stockLevel.update({
+      where: { partId: part.id },
+      data: { quantityOnHand: stock.quantityOnHand + delta },
+    });
+    await prisma.stockAdjustment.create({
+      data: {
+        partId: part.id,
+        delta,
+        quantityAfter: stock.quantityOnHand + delta,
+        userId: admin.id,
+        note: "received shipment",
+      },
+    });
   }
 
   const jobs = await prisma.job.count();
