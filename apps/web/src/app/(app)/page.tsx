@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import Link from "next/link";
 
 import { JOB_STATUSES } from "@acme/core";
@@ -9,20 +8,9 @@ import { formatDateTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-// The board is the most-loaded page in the office; a short cache keeps the
-// three queries off every refresh.
-const cachedCounts = unstable_cache(
-  async () => {
-    const rows = await prisma.job.groupBy({ by: ["status"], _count: { _all: true } });
-    return rows.map((row) => ({ status: row.status, count: row._count._all }));
-  },
-  ["dashboard-status-counts"],
-  { revalidate: 30 },
-);
-
 export default async function DashboardPage() {
   const [byStatus, urgent, upcoming] = await Promise.all([
-    cachedCounts(),
+    prisma.job.groupBy({ by: ["status"], _count: { _all: true } }),
     prisma.job.findMany({
       where: { priority: "urgent", status: { in: ["requested", "scheduled", "in_progress"] } },
       include: { customer: true },
@@ -37,7 +25,7 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const counts = new Map(byStatus.map((row) => [row.status, row.count]));
+  const counts = new Map(byStatus.map((row) => [row.status, row._count._all]));
 
   return (
     <>
