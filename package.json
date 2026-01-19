@@ -6,7 +6,9 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "db:setup": "pnpm --filter @acme/db db:deploy && pnpm --filter @acme/db db:seed",
+    "db:seed": "pnpm --filter @acme/db db:seed"
   },
   "devDependencies": {
     "turbo": "^2.3.3"
