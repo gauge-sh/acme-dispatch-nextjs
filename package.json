@@ -11,6 +11,6 @@
     "db:seed": "pnpm --filter @acme/db db:seed"
   },
   "devDependencies": {
-    "turbo": "^2.3.3"
+    "turbo": "^2.5.8"
   }
 }
