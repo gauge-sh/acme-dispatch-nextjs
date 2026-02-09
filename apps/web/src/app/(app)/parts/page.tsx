@@ -5,6 +5,8 @@ import { listParts, prisma } from "@acme/db";
 import { Pager } from "@/components/Pager";
 import { formatCents } from "@/lib/format";
 
+export const metadata = { title: "Parts & stock" };
+
 const PER_PAGE = 25;
 
 interface SearchParams {

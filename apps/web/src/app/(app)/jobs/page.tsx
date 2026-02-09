@@ -7,6 +7,8 @@ import { Pager } from "@/components/Pager";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatDate } from "@/lib/format";
 
+export const metadata = { title: "Jobs" };
+
 const PER_PAGE = 25;
 
 interface SearchParams {

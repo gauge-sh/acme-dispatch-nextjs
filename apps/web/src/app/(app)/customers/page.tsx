@@ -4,6 +4,8 @@ import { listCustomers } from "@acme/db";
 
 import { Pager } from "@/components/Pager";
 
+export const metadata = { title: "Customers" };
+
 const PER_PAGE = 25;
 
 interface SearchParams {

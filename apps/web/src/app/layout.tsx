@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Acme Dispatch",
+  title: { template: "%s · Acme Dispatch", default: "Acme Dispatch" },
   description: "Field-service scheduling, parts, and billing records",
 };
 

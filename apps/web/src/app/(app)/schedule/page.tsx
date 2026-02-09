@@ -4,6 +4,8 @@ import { prisma } from "@acme/db";
 
 import { formatTime } from "@/lib/format";
 
+export const metadata = { title: "Schedule" };
+
 const DAY_MS = 86_400_000;
 
 function startOfUtcDay(value: Date): Date {

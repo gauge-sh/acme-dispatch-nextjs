@@ -5,6 +5,8 @@ import { listTechnicians, parseSkillTags } from "@acme/db";
 import { Pager } from "@/components/Pager";
 import { formatCents } from "@/lib/format";
 
+export const metadata = { title: "Technicians" };
+
 const PER_PAGE = 25;
 
 interface SearchParams {

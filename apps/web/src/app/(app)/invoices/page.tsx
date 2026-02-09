@@ -5,6 +5,8 @@ import { listInvoices, prisma } from "@acme/db";
 import { Pager } from "@/components/Pager";
 import { formatCents, formatDate } from "@/lib/format";
 
+export const metadata = { title: "Invoice records" };
+
 const PER_PAGE = 25;
 
 interface SearchParams {

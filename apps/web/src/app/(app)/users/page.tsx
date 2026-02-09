@@ -7,6 +7,8 @@ import { Pager } from "@/components/Pager";
 import { formatDate } from "@/lib/format";
 import { requireAdmin } from "@/lib/session";
 
+export const metadata = { title: "Users" };
+
 const PER_PAGE = 25;
 
 interface SearchParams {
