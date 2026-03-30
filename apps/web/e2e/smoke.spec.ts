@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 // Assumes a seeded database (`pnpm db:setup` from the repo root).
 
-async function signIn(page: import("@playwright/test").Page) {
+async function signIn(page: Page) {
   await page.goto("/login");
   await page.getByLabel("Email").fill("olivia@acme-dispatch.example");
   await page.getByLabel("Password").fill("dispatch123");
