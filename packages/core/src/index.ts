@@ -60,6 +60,7 @@ export {
 export { checkInvoiceable, draftInvoice } from "./invoicing";
 export {
   FieldErrors,
+  fieldMustExist,
   readBool,
   readEmail,
   readEnum,

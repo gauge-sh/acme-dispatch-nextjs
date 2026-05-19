@@ -3,6 +3,15 @@ import { ValidationFailed } from "./errors";
 /** A request body after JSON parsing: wire keys, unknown values. */
 export type Attrs = Record<string, unknown>;
 
+/**
+ * A bad id in the URL path is `not_found` — the route points at nothing. A
+ * bad id in the body is this: the caller's input is wrong, so it is
+ * `validation_failed` with the field named in both the message and `fields`.
+ */
+export function fieldMustExist(field: string): never {
+  throw new ValidationFailed(`${field} must exist`, { [field]: "must exist" });
+}
+
 export class FieldErrors {
   private readonly messages: Record<string, string> = {};
   private first: string | undefined;
@@ -139,6 +148,31 @@ export function readEnum<T extends string>(
   const value = input[field];
   if (typeof value !== "string" || !options.guard(value)) {
     errors.add(field, `unknown ${options.label}`);
+    return undefined;
+  }
+  return value;
+}
+
+/**
+ * `password` is accepted but optional, and is not a nullable field: an
+ * explicit `null` on a PATCH means "no change", never "clear it", because a
+ * cleared password would lock the account out.
+ */
+export function readPassword(
+  input: Attrs,
+  field: string,
+  rules: { min: number },
+  errors: FieldErrors,
+): string | undefined {
+  if (!(field in input)) return undefined;
+  const value = input[field];
+  if (value === null) return undefined;
+  if (typeof value !== "string") {
+    errors.add(field, `${field} must be a string`);
+    return undefined;
+  }
+  if (value.length < rules.min) {
+    errors.add(field, `${field} must be at least ${rules.min} characters`);
     return undefined;
   }
   return value;
