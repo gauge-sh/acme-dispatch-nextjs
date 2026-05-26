@@ -13,11 +13,16 @@ const HTTP_STATUS: Record<string, number> = {
   insufficient_stock: 409,
 };
 
-export function errorResponse(code: string, message: string): Response {
-  return Response.json(
-    { error: { code, message } },
-    { status: HTTP_STATUS[code] ?? 500 },
-  );
+export function errorResponse(
+  code: string,
+  message: string,
+  fields?: Record<string, string>,
+): Response {
+  const error: Record<string, unknown> = { code, message };
+  if (fields && Object.keys(fields).length > 0) {
+    error["fields"] = fields;
+  }
+  return Response.json({ error }, { status: HTTP_STATUS[code] ?? 500 });
 }
 
 export interface RouteContext {
@@ -34,7 +39,7 @@ export function route(fn: Handler, options: { admin?: boolean } = {}) {
   return async (request: Request, context: RouteContext): Promise<Response> => {
     const user = await authenticate(request);
     if (!user) {
-      return errorResponse("unauthorized", "invalid or missing api token");
+      return errorResponse("unauthorized", "invalid or missing token");
     }
     if (options.admin && user.role !== "admin") {
       return errorResponse("forbidden", "admin access required");
@@ -43,7 +48,7 @@ export function route(fn: Handler, options: { admin?: boolean } = {}) {
       return await fn(request, context, user);
     } catch (error) {
       if (error instanceof DomainError) {
-        return errorResponse(error.code, error.message);
+        return errorResponse(error.code, error.message, error.fields);
       }
       console.error(error);
       return errorResponse("internal_error", "internal server error");
@@ -52,14 +57,18 @@ export function route(fn: Handler, options: { admin?: boolean } = {}) {
 }
 
 export async function readBody(request: Request): Promise<Attrs> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new ValidationFailed("requests must be application/json");
+  }
   let parsed: unknown;
   try {
     parsed = await request.json();
   } catch {
-    throw new ValidationFailed("request body must be valid json");
+    throw new ValidationFailed("invalid request body");
   }
   if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new ValidationFailed("request body must be a json object");
+    throw new ValidationFailed("invalid request body");
   }
   return parsed as Attrs;
 }
