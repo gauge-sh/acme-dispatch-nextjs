@@ -1,6 +1,7 @@
 import {
   type Attrs,
   FieldErrors,
+  fieldMustExist,
   type JobStatus,
   NotFound,
   ValidationFailed,
@@ -44,9 +45,7 @@ export async function addJobPart(jobId: number, input: Attrs): Promise<JobPart> 
       where: { id: partId },
       include: { stockLevel: true },
     });
-    if (!part) {
-      throw new ValidationFailed("part not found", { part_id: "part not found" });
-    }
+    if (!part) fieldMustExist("part_id");
     const onHand = part.stockLevel?.quantityOnHand ?? 0;
     await tx.stockLevel.update({
       where: { partId },

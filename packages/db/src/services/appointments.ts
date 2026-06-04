@@ -2,6 +2,7 @@ import {
   type AppointmentAttrs,
   type Attrs,
   type Booking,
+  fieldMustExist,
   type JobStatus,
   NotFound,
   ValidationFailed,
@@ -54,19 +55,13 @@ export async function getAppointment(id: number): Promise<Appointment> {
 
 async function checkJobAcceptsAppointment(jobId: number): Promise<void> {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
-  if (!job) {
-    throw new ValidationFailed("job not found", { job_id: "job not found" });
-  }
+  if (!job) fieldMustExist("job_id");
   checkAcceptsAppointments(job.status as JobStatus);
 }
 
 async function checkTechnicianAssignable(technicianId: number): Promise<void> {
   const technician = await prisma.technician.findUnique({ where: { id: technicianId } });
-  if (!technician) {
-    throw new ValidationFailed("technician not found", {
-      technician_id: "technician not found",
-    });
-  }
+  if (!technician) fieldMustExist("technician_id");
   if (!technician.isActive) {
     throw new ValidationFailed("technician is not active", {
       technician_id: "technician is not active",

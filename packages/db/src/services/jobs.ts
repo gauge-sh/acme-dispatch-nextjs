@@ -1,5 +1,6 @@
 import {
   type Attrs,
+  fieldMustExist,
   type JobStatus,
   NotFound,
   type Priority,
@@ -60,11 +61,7 @@ export async function getJob(id: number): Promise<JobDetail> {
 
 async function checkCustomerExists(customerId: number): Promise<void> {
   const customer = await prisma.customer.findUnique({ where: { id: customerId } });
-  if (!customer) {
-    throw new ValidationFailed("customer not found", {
-      customer_id: "customer not found",
-    });
-  }
+  if (!customer) fieldMustExist("customer_id");
 }
 
 export async function createJob(input: Attrs): Promise<JobDetail> {
