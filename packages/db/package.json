@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@acme/core": "workspace:*",
-    "@prisma/client": "^6.19.1"
+    "@prisma/client": "^6.19.1",
+    "bcryptjs": "^3.0.3"
   },
   "devDependencies": {
     "@types/node": "22.19.3",

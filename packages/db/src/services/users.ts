@@ -6,9 +6,12 @@ import {
   parseUserUpdate,
   type Role,
 } from "@acme/core";
+import { hash } from "bcryptjs";
 import type { Prisma, User } from "@prisma/client";
 
 import { prisma } from "../client";
+
+const BCRYPT_COST = 10;
 import { type Page, type PageParams, pageSlice } from "../pagination";
 
 export interface UserFilters {
@@ -45,21 +48,16 @@ async function checkEmailFree(email: string, exceptId?: number): Promise<void> {
   }
 }
 
-/** `passwordHash` comes from the web app only; the API never sets one. */
-export async function createUser(
-  input: Attrs,
-  options: { passwordHash?: string } = {},
-): Promise<User> {
-  const attrs = parseUserCreate(input);
+export async function createUser(input: Attrs): Promise<User> {
+  const { password, ...attrs } = parseUserCreate(input);
   await checkEmailFree(attrs.email);
   return prisma.user.create({
-    data: { ...attrs, passwordHash: options.passwordHash ?? null },
+    data: {
+      ...attrs,
+      // Without a password the account cannot sign in until an admin sets one.
+      passwordHash: password === undefined ? null : await hash(password, BCRYPT_COST),
+    },
   });
-}
-
-export async function setUserPassword(id: number, passwordHash: string): Promise<void> {
-  await getUser(id);
-  await prisma.user.update({ where: { id }, data: { passwordHash } });
 }
 
 async function isLastActiveAdmin(user: User): Promise<boolean> {
@@ -77,18 +75,18 @@ export async function updateUser(
   actorId: number,
 ): Promise<User> {
   const user = await getUser(id);
-  const patch = parseUserUpdate(input);
+  const { password, ...patch } = parseUserUpdate(input);
 
   if (patch.email !== undefined) await checkEmailFree(patch.email, id);
   if (id === actorId) {
     if (patch.role !== undefined && patch.role !== user.role) {
-      throw new ValidationFailed("cannot change your own role", {
-        role: "cannot change your own role",
+      throw new ValidationFailed("you cannot change your own role", {
+        role: "you cannot change your own role",
       });
     }
     if (patch.isActive === false && user.isActive) {
-      throw new ValidationFailed("cannot deactivate your own account", {
-        is_active: "cannot deactivate your own account",
+      throw new ValidationFailed("you cannot deactivate yourself", {
+        is_active: "you cannot deactivate yourself",
       });
     }
   }
@@ -97,7 +95,13 @@ export async function updateUser(
   if ((demoted || deactivated) && (await isLastActiveAdmin(user))) {
     throw new ValidationFailed("cannot remove the last active admin");
   }
-  return prisma.user.update({ where: { id }, data: patch });
+  return prisma.user.update({
+    where: { id },
+    data: {
+      ...patch,
+      ...(password !== undefined ? { passwordHash: await hash(password, BCRYPT_COST) } : {}),
+    },
+  });
 }
 
 export async function deleteUser(id: number): Promise<void> {

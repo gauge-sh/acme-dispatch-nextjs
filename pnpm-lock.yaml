@@ -45,6 +45,9 @@ importers:
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -109,6 +112,9 @@ importers:
       '@prisma/client':
         specifier: ^6.19.1
         version: 6.19.1(prisma@6.19.1(typescript@5.9.3))(typescript@5.9.3)
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
     devDependencies:
       '@types/node':
         specifier: 22.19.3
