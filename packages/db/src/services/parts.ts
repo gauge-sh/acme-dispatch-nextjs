@@ -69,7 +69,7 @@ export async function deletePart(id: number): Promise<void> {
   await getPart(id);
   const used = await prisma.jobPart.count({ where: { partId: id } });
   if (used > 0) {
-    throw new ValidationFailed("part has been used on a job and cannot be deleted");
+    throw new ValidationFailed("part has been used on jobs and cannot be deleted");
   }
   await prisma.part.delete({ where: { id } });
 }
