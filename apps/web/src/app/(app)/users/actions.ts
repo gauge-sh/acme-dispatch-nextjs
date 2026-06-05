@@ -1,23 +1,16 @@
 "use server";
 
-import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  createUser,
-  deleteUser,
-  issueToken,
-  revokeToken,
-  setUserPassword,
-  updateUser,
-} from "@acme/db";
+import { createUser, deleteUser, issueToken, revokeToken, updateUser } from "@acme/db";
 
-import { type ActionState, actionError, text, textOrNull } from "@/lib/forms";
+import { type ActionState, actionError, text } from "@/lib/forms";
 import { requireAdmin } from "@/lib/session";
 
 // Role and status are dropdowns that self-edits omit entirely, so their
-// absence means "leave alone", never "clear".
+// absence means "leave alone", never "clear". An empty password field means
+// "no change" on edit; core treats an absent key the same way.
 function userAttrs(data: FormData) {
   const attrs: Record<string, unknown> = {
     email: text(data, "email"),
@@ -27,6 +20,8 @@ function userAttrs(data: FormData) {
   if (typeof role === "string") attrs["role"] = role;
   const isActive = data.get("is_active");
   if (typeof isActive === "string") attrs["is_active"] = isActive === "true";
+  const password = text(data, "password");
+  if (password !== "") attrs["password"] = password;
   return attrs;
 }
 
@@ -35,18 +30,15 @@ export async function createUserAction(
   data: FormData,
 ): Promise<ActionState | null> {
   await requireAdmin();
-  const password = text(data, "password");
-  if (password.length < 8) {
-    return {
-      error: "password must be at least 8 characters",
-      fields: { password: "password must be at least 8 characters" },
-    };
+  // The web admin screen always sets a password on create, even though the
+  // wire contract leaves it optional — an account nobody can sign into is
+  // never useful from this screen.
+  if (text(data, "password") === "") {
+    return { error: "password is required", fields: { password: "password is required" } };
   }
   let id: number;
   try {
-    const user = await createUser(userAttrs(data), {
-      passwordHash: await hash(password, 10),
-    });
+    const user = await createUser(userAttrs(data));
     id = user.id;
   } catch (error) {
     return actionError(error);
@@ -61,18 +53,8 @@ export async function updateUserAction(
   data: FormData,
 ): Promise<ActionState | null> {
   const actor = await requireAdmin();
-  const password = textOrNull(data, "password");
-  if (password !== null && password.length < 8) {
-    return {
-      error: "password must be at least 8 characters",
-      fields: { password: "password must be at least 8 characters" },
-    };
-  }
   try {
     await updateUser(id, userAttrs(data), actor.id);
-    if (password !== null) {
-      await setUserPassword(id, await hash(password, 10));
-    }
   } catch (error) {
     return actionError(error);
   }
@@ -85,7 +67,15 @@ export async function deleteUserAction(
   _prev: ActionState | null,
   _data: FormData,
 ): Promise<ActionState | null> {
-  await requireAdmin();
+  const actor = await requireAdmin();
+  // The API allows this (unless you are the last active admin); the web UI
+  // refuses it outright, both by hiding the button and by rejecting it here.
+  if (actor.id === id) {
+    return {
+      error: "you cannot delete your own account",
+      fields: {},
+    };
+  }
   try {
     await deleteUser(id);
   } catch (error) {
