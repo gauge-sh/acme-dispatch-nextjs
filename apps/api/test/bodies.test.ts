@@ -20,7 +20,7 @@ describe("request bodies", () => {
     expect(response.status).toBe(400);
     expect(await errorOf(response)).toEqual({
       code: "validation_failed",
-      message: "request body must be valid json",
+      message: "invalid request body",
     });
   });
 
@@ -29,7 +29,7 @@ describe("request bodies", () => {
     for (const body of ["[1,2]", '"a string"', "42", "null", "true"]) {
       const response = await createCustomer(raw("/api/v1/customers", token, body), ctx());
       expect(response.status, body).toBe(400);
-      expect((await errorOf(response)).message).toBe("request body must be a json object");
+      expect((await errorOf(response)).message).toBe("invalid request body");
     }
   });
 
@@ -37,7 +37,7 @@ describe("request bodies", () => {
     const { token } = await signIn();
     const response = await createCustomer(raw("/api/v1/customers", token, ""), ctx());
     expect(response.status).toBe(400);
-    expect((await errorOf(response)).message).toBe("request body must be valid json");
+    expect((await errorOf(response)).message).toBe("invalid request body");
   });
 
   it("rejects a transition body without a status string", async () => {
@@ -51,6 +51,24 @@ describe("request bodies", () => {
       );
       expect(response.status, body).toBe(400);
       expect((await errorOf(response)).message).toBe("unknown status");
+    }
+  });
+
+  it("rejects a missing or wrong content type", async () => {
+    const { token } = await signIn();
+    for (const contentType of [undefined, "text/plain", "multipart/form-data"]) {
+      const headers: Record<string, string> = { authorization: `Bearer ${token}` };
+      if (contentType) headers["content-type"] = contentType;
+      const response = await createCustomer(
+        new Request("http://api.test/api/v1/customers", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ name: "X", service_address: "1 Elm" }),
+        }),
+        ctx(),
+      );
+      expect(response.status, String(contentType)).toBe(400);
+      expect((await errorOf(response)).message).toBe("requests must be application/json");
     }
   });
 

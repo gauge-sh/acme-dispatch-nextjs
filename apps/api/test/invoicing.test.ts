@@ -83,6 +83,26 @@ describe("POST /jobs/:id/parts", () => {
     expect((await errorOf(response)).message).toBe("quantity must be greater than zero");
   });
 
+  it("rejects a nonexistent part_id in the body with a validation error, not a 404", async () => {
+    const { token } = await signIn();
+    const customer = await makeCustomer();
+    const job = await makeJob(customer.id);
+
+    const response = await addPart(
+      request("POST", `/api/v1/jobs/${job.id}/parts`, {
+        token,
+        body: { part_id: 999999, quantity: 1 },
+      }),
+      ctx({ id: String(job.id) }),
+    );
+    expect(response.status).toBe(400);
+    expect(await errorOf(response)).toEqual({
+      code: "validation_failed",
+      message: "part_id must exist",
+      fields: { part_id: "must exist" },
+    });
+  });
+
   it("keeps two recordings of the same part as two rows", async () => {
     const { token } = await signIn();
     const customer = await makeCustomer();
@@ -216,6 +236,28 @@ describe("POST /jobs/:id/invoice", () => {
 
     const updated = await prisma.job.findUniqueOrThrow({ where: { id: job.id } });
     expect(updated.status).toBe("invoiced");
+  });
+
+  it("serializes a non-terminating duration as the shortest round-trip double", async () => {
+    const { token } = await signIn();
+    const customer = await makeCustomer();
+    const technician = await makeTechnician({ hourlyCostCents: 5000 });
+    const job = await makeJob(customer.id, { status: "completed" });
+    await makeAppointment(job.id, technician.id, {
+      scheduledStart: new Date("2025-03-12T09:00:00Z"),
+      scheduledEnd: new Date("2025-03-12T09:20:00Z"), // 20 minutes, a third of an hour
+    });
+
+    const response = await invoice(
+      request("POST", `/api/v1/jobs/${job.id}/invoice`, { token }),
+      ctx({ id: String(job.id) }),
+    );
+    const parsed = await body(response);
+    const lines = parsed["line_items"] as Array<Record<string, unknown>>;
+    expect(lines[0]?.["quantity"]).toBe(0.3333333333333333);
+    // The exact duration bills, never the rendered label: 5000 * 1/3 * 1.6 = 2666.67 -> 2667.
+    expect(lines[0]?.["amount_cents"]).toBe(2667);
+    expect(lines[0]?.["description"]).toBe("Dana Reyes — 0.33h on 2025-03-12");
   });
 
   it("applies the weekend surcharge per appointment", async () => {

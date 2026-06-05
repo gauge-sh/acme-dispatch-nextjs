@@ -81,9 +81,9 @@ export async function body(response: Response): Promise<Record<string, unknown>>
 
 export async function errorOf(
   response: Response,
-): Promise<{ code: string; message: string }> {
+): Promise<{ code: string; message: string; fields?: Record<string, string> }> {
   const parsed = await body(response);
-  return parsed["error"] as { code: string; message: string };
+  return parsed["error"] as { code: string; message: string; fields?: Record<string, string> };
 }
 
 export async function makeCustomer(overrides: Partial<Customer> = {}): Promise<Customer> {

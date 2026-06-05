@@ -97,6 +97,17 @@ describe("GET /customers", () => {
     );
     expect((await body(response))["per_page"]).toBe(100);
   });
+
+  it("ignores an unknown query parameter rather than erroring", async () => {
+    const { token } = await signIn();
+    await makeCustomer();
+    const response = await list(
+      request("GET", "/api/v1/customers?sort=whatever&color=blue", { token }),
+      ctx(),
+    );
+    expect(response.status).toBe(200);
+    expect((await body(response))["total"]).toBe(1);
+  });
 });
 
 describe("POST /customers", () => {
@@ -133,12 +144,12 @@ describe("POST /customers", () => {
     const { token } = await signIn();
     const raw = new Request("http://api.test/api/v1/customers", {
       method: "POST",
-      headers: { authorization: `Bearer ${token}` },
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
       body: "not json",
     });
     const response = await create(raw, ctx());
     expect(response.status).toBe(400);
-    expect((await errorOf(response)).message).toBe("request body must be valid json");
+    expect((await errorOf(response)).message).toBe("invalid request body");
   });
 });
 

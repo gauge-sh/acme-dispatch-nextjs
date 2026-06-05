@@ -142,7 +142,7 @@ describe("DELETE /parts/:id", () => {
     );
     expect(response.status).toBe(400);
     expect((await errorOf(response)).message).toBe(
-      "part has been used on a job and cannot be deleted",
+      "part has been used on jobs and cannot be deleted",
     );
   });
 

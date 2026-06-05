@@ -58,7 +58,11 @@ describe("POST /jobs", () => {
       ctx(),
     );
     expect(response.status).toBe(400);
-    expect((await errorOf(response)).message).toBe("customer not found");
+    expect(await errorOf(response)).toEqual({
+      code: "validation_failed",
+      message: "customer_id must exist",
+      fields: { customer_id: "must exist" },
+    });
   });
 });
 

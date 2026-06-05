@@ -201,9 +201,79 @@ describe("POST /appointments", () => {
       );
     }
   });
+
+  it("rejects a nonexistent technician_id in the body with a validation error, not a 404", async () => {
+    const { token } = await signIn();
+    const customer = await makeCustomer();
+    const job = await makeJob(customer.id);
+
+    const response = await create(
+      request("POST", "/api/v1/appointments", {
+        token,
+        body: appointmentBody(job.id, 999999, "2025-04-01T09:00:00Z", "2025-04-01T10:00:00Z"),
+      }),
+      ctx(),
+    );
+    expect(response.status).toBe(400);
+    expect(await errorOf(response)).toEqual({
+      code: "validation_failed",
+      message: "technician_id must exist",
+      fields: { technician_id: "must exist" },
+    });
+  });
+
+  it("rejects a nonexistent job_id in the body the same way", async () => {
+    const { token } = await signIn();
+    const technician = await makeTechnician();
+
+    const response = await create(
+      request("POST", "/api/v1/appointments", {
+        token,
+        body: appointmentBody(999999, technician.id, "2025-04-01T09:00:00Z", "2025-04-01T10:00:00Z"),
+      }),
+      ctx(),
+    );
+    expect(response.status).toBe(400);
+    expect(await errorOf(response)).toEqual({
+      code: "validation_failed",
+      message: "job_id must exist",
+      fields: { job_id: "must exist" },
+    });
+  });
 });
 
 describe("PATCH /appointments/:id", () => {
+  it("allows editing times and notes on an appointment whose job has closed", async () => {
+    // Attaching (create, or re-pointing job_id) is blocked on a closed job;
+    // editing an appointment already there is how completion notes get
+    // written after the work is done, so it stays open.
+    const { token } = await signIn();
+    const customer = await makeCustomer();
+    const technician = await makeTechnician();
+    const statuses = ["completed", "invoiced", "cancelled"] as const;
+    for (const [index, status] of statuses.entries()) {
+      const job = await makeJob(customer.id, { status });
+      // Distinct slots per iteration so this technician's calendar does not
+      // self-collide across loop iterations.
+      const day = 12 + index;
+      const appointment = await makeAppointment(job.id, technician.id, {
+        scheduledStart: new Date(`2025-03-${day}T09:00:00Z`),
+        scheduledEnd: new Date(`2025-03-${day}T10:00:00Z`),
+      });
+      const response = await update(
+        request("PATCH", `/api/v1/appointments/${appointment.id}`, {
+          token,
+          body: { completion_notes: "Replaced the part and tested twice." },
+        }),
+        ctx({ id: String(appointment.id) }),
+      );
+      expect(response.status, status).toBe(200);
+      expect((await body(response))["completion_notes"]).toBe(
+        "Replaced the part and tested twice.",
+      );
+    }
+  });
+
   it("never conflicts with itself on reschedule", async () => {
     const { token } = await signIn();
     const customer = await makeCustomer();

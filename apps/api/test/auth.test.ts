@@ -13,7 +13,7 @@ describe("bearer authentication", () => {
     expect(response.status).toBe(401);
     expect(await errorOf(response)).toEqual({
       code: "unauthorized",
-      message: "invalid or missing api token",
+      message: "invalid or missing token",
     });
   });
 

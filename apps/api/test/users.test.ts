@@ -1,3 +1,4 @@
+import { compare } from "bcryptjs";
 import { describe, expect, it } from "vitest";
 
 import { prisma } from "@acme/db";
@@ -55,6 +56,51 @@ describe("POST /users", () => {
     );
     expect(response.status).toBe(403);
   });
+
+  it("accepts a password, hashes it, and never echoes it back", async () => {
+    const { token } = await signIn("admin");
+    const response = await create(
+      request("POST", "/api/v1/users", {
+        token,
+        body: { email: "new@acme.example", name: "New Hire", password: "correcthorse" },
+      }),
+      ctx(),
+    );
+    expect(response.status).toBe(201);
+    const parsed = await body(response);
+    expect(parsed).not.toHaveProperty("password");
+    const stored = await prisma.user.findUniqueOrThrow({ where: { id: parsed["id"] as number } });
+    expect(stored.passwordHash).not.toBeNull();
+    expect(stored.passwordHash).not.toBe("correcthorse");
+    expect(await compare("correcthorse", stored.passwordHash as string)).toBe(true);
+  });
+
+  it("creates a user with no password when none is given", async () => {
+    const { token } = await signIn("admin");
+    const response = await create(
+      request("POST", "/api/v1/users", {
+        token,
+        body: { email: "no-password@acme.example", name: "No Password" },
+      }),
+      ctx(),
+    );
+    const parsed = await body(response);
+    const stored = await prisma.user.findUniqueOrThrow({ where: { id: parsed["id"] as number } });
+    expect(stored.passwordHash).toBeNull();
+  });
+
+  it("rejects a password shorter than 8 characters", async () => {
+    const { token } = await signIn("admin");
+    const response = await create(
+      request("POST", "/api/v1/users", {
+        token,
+        body: { email: "short@acme.example", name: "Short", password: "abc123" },
+      }),
+      ctx(),
+    );
+    expect(response.status).toBe(400);
+    expect((await errorOf(response)).message).toBe("password must be at least 8 characters");
+  });
 });
 
 describe("GET /users", () => {
@@ -106,7 +152,7 @@ describe("PATCH /users/:id", () => {
       ctx({ id: String(user.id) }),
     );
     expect(response.status).toBe(400);
-    expect((await errorOf(response)).message).toBe("cannot change your own role");
+    expect((await errorOf(response)).message).toBe("you cannot change your own role");
   });
 
   it("blocks deactivating yourself", async () => {
@@ -120,7 +166,7 @@ describe("PATCH /users/:id", () => {
       ctx({ id: String(user.id) }),
     );
     expect(response.status).toBe(400);
-    expect((await errorOf(response)).message).toBe("cannot deactivate your own account");
+    expect((await errorOf(response)).message).toBe("you cannot deactivate yourself");
   });
 
   it("accepts a no-op role patch on yourself", async () => {
@@ -134,6 +180,44 @@ describe("PATCH /users/:id", () => {
     );
     expect(response.status).toBe(200);
     expect((await body(response))["name"]).toBe("Renamed Admin");
+  });
+
+  it("updates the password and never echoes it", async () => {
+    const { token } = await signIn("admin");
+    const target = await createUser("dispatcher");
+    const response = await update(
+      request("PATCH", `/api/v1/users/${target.id}`, {
+        token,
+        body: { password: "newpassword1" },
+      }),
+      ctx({ id: String(target.id) }),
+    );
+    expect(response.status).toBe(200);
+    expect(await body(response)).not.toHaveProperty("password");
+    const stored = await prisma.user.findUniqueOrThrow({ where: { id: target.id } });
+    expect(await compare("newpassword1", stored.passwordHash as string)).toBe(true);
+  });
+
+  it("treats an explicit null password as no change, not a clear", async () => {
+    const { token } = await signIn("admin");
+    const target = await createUser("dispatcher");
+    await update(
+      request("PATCH", `/api/v1/users/${target.id}`, {
+        token,
+        body: { password: "firstpassword" },
+      }),
+      ctx({ id: String(target.id) }),
+    );
+    const response = await update(
+      request("PATCH", `/api/v1/users/${target.id}`, {
+        token,
+        body: { password: null, name: "Still Dispatching" },
+      }),
+      ctx({ id: String(target.id) }),
+    );
+    expect(response.status).toBe(200);
+    const stored = await prisma.user.findUniqueOrThrow({ where: { id: target.id } });
+    expect(await compare("firstpassword", stored.passwordHash as string)).toBe(true);
   });
 });
 
@@ -154,6 +238,16 @@ describe("DELETE /users/:id", () => {
     const response = await destroy(
       request("DELETE", `/api/v1/users/${other.id}`, { token }),
       ctx({ id: String(other.id) }),
+    );
+    expect(response.status).toBe(204);
+  });
+
+  it("allows self-deletion over the API when you are not the last active admin", async () => {
+    const { user, token } = await signIn("admin");
+    await createUser("admin"); // a second admin, so the seat does not go empty
+    const response = await destroy(
+      request("DELETE", `/api/v1/users/${user.id}`, { token }),
+      ctx({ id: String(user.id) }),
     );
     expect(response.status).toBe(204);
   });
