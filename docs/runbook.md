@@ -2,8 +2,7 @@
 
 ## Prerequisites
 
-Node 22 and pnpm. SQLite ships with the OS on anything we deploy to; nothing
-else is required — no external services of any kind.
+Node 22 and pnpm. Local development uses SQLite, which ships with the OS.
 
 ## First run
 
